@@ -123,6 +123,13 @@ ollama status clean --force   # clear without prompting
 ollama run ping
 ollama run codegen "write a Python function to validate email addresses"
 ollama run write src/utils.py "write a retry decorator with exponential backoff"
+ollama run nl "write a retry decorator in src/utils.py"
+ollama run "run tests for auth"
+ollama run "add a retry decorator to src/utils.py"
+ollama run "update src/api.py with a FastAPI endpoint for user login"
+ollama run "generate a Go struct for a user profile"
+ollama run --dry-run "add a retry decorator to src/utils.py"
+ollama run --dry-run test auth
 ollama run test
 ollama run exec "ls $PROJECTS_DIR"
 ollama run list-projects

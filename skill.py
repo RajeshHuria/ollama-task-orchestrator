@@ -24,11 +24,14 @@ class OllamaTaskOrchestrator:
         self.runner_path = runner_path
         self.lock = threading.Lock()
 
-    def _ssh(self, command: str):
+    def _ssh(self, command):
         """Run a command on the worker Mac via SSH."""
+        if isinstance(command, str):
+            remote_command = command
+        else:
+            remote_command = shlex.join(command)
         result = subprocess.run(
-            f"ssh {self.worker_host} {shlex.quote(command)}",
-            shell=True,
+            ["ssh", self.worker_host, remote_command],
             capture_output=True,
             text=True,
         )
@@ -36,7 +39,9 @@ class OllamaTaskOrchestrator:
 
     def queue_status(self, args: str = "") -> str:
         """Check queue status and Ollama server health."""
-        cmd = f"{self.runner_path}/queue_status.sh {args}".strip()
+        cmd = [f"{self.runner_path}/queue_status.sh"]
+        if args:
+            cmd.extend(shlex.split(args))
         stdout, stderr, code = self._ssh(cmd)
         if code != 0:
             return f"Error checking queue status: {stderr}"
@@ -45,7 +50,7 @@ class OllamaTaskOrchestrator:
     def run_task(self, task_command: str) -> str:
         """Run a task on the worker Mac with exclusivity locking."""
         with self.lock:
-            cmd = f"{self.runner_path}/run_task.sh {task_command}"
+            cmd = [f"{self.runner_path}/run_task.sh", *shlex.split(task_command)]
             stdout, stderr, code = self._ssh(cmd)
             if code != 0:
                 return f"Error running task: {stderr}"
