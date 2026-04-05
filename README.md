@@ -30,11 +30,24 @@ Agents can check Ollama's queue health, run code generation tasks, write files, 
 
 ### 1. Set up the runner on your worker machine
 
-Pick a directory on your worker machine to hold the runner scripts (e.g. `~/worker/runner/`) and copy the `runner/` directory there:
+Clone the repo and run the installer on each machine you want to use as a worker:
 
 ```bash
-scp -r runner/ <your-username>@<your-worker-host>:<your-runner-dir>/
-ssh <your-username>@<your-worker-host> 'chmod +x <your-runner-dir>/*.sh'
+git clone https://github.com/RajeshHuria/ollama-task-orchestrator.git
+cd ollama-task-orchestrator
+./install.sh
+```
+
+This installs the runner scripts to `~/worker/runner/` by default. To use a custom path:
+
+```bash
+RUNNER_DIR=/custom/path ./install.sh
+```
+
+To update the runner scripts later:
+
+```bash
+git pull && ./install.sh
 ```
 
 ### 2. Configure SSH
