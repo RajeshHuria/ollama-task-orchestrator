@@ -24,6 +24,7 @@ Execute a task on the worker machine. Available tasks:
 | `test` | `ollama run test [suite]` | Run project tests |
 | `exec` | `ollama run exec <command>` | Run arbitrary shell command |
 | `list-projects` | `ollama run list-projects` | List available projects |
+| `list-models` | `ollama run list-models` | List available Ollama models via the HTTP API |
 
 ## Configuration
 | Variable | Default | Description |
@@ -33,7 +34,7 @@ Execute a task on the worker machine. Available tasks:
 | `WORKER_ROOT` | `$HOME/worker` | Worker root directory |
 | `PROJECTS_DIR` | `$WORKER_ROOT/projects` | Projects directory |
 | `DEFAULT_PROJECT` | _(none)_ | Default project for context |
-| `OLLAMA_MODEL` | `qwen2.5-coder:32b` | Ollama model |
+| `OLLAMA_MODEL` | `qwen2.5-coder:7b` | Ollama model |
 | `OLLAMA_URL` | `http://localhost:11434/api/generate` | Ollama API endpoint |
 
 ## Files

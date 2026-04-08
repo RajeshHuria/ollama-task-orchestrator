@@ -94,7 +94,7 @@ Set these on your **worker machine** (e.g. in `~/.zshrc` or `~/.bashrc`):
 | `WORKER_ROOT` | `$HOME/worker` | Root working directory |
 | `PROJECTS_DIR` | `$WORKER_ROOT/projects` | Directory containing your projects |
 | `DEFAULT_PROJECT` | _(none — **must set** for codegen/write/test)_ | Project folder name used for context and file writes |
-| `OLLAMA_MODEL` | `qwen2.5-coder:32b` | Ollama model to use — change to any model you have pulled |
+| `OLLAMA_MODEL` | `qwen2.5-coder:7b` | Ollama model to use — change to any model you have pulled |
 | `OLLAMA_URL` | `http://localhost:11434/api/generate` | Ollama API endpoint |
 | `OLLAMA_TIMEOUT` | `300` | Max seconds to wait for Ollama response before giving up. Increase for large models or slow hardware — local models can take a while to load on first run. |
 
@@ -133,7 +133,10 @@ ollama run --dry-run test auth
 ollama run test
 ollama run exec "ls $PROJECTS_DIR"
 ollama run list-projects
+ollama run list-models
 ```
+
+`list-models` uses the Ollama HTTP API directly, so it still works in SSH sessions where the `ollama` CLI is not available on `PATH`.
 
 ---
 
