@@ -137,6 +137,7 @@ ollama run list-models
 ```
 
 `list-models` uses the Ollama HTTP API directly, so it still works in SSH sessions where the `ollama` CLI is not available on `PATH`.
+The skill wrapper also treats `list-models` as a read-only remote API check, so installed-model discovery can keep working even when a worker is busy or has an orphaned generation.
 
 ---
 
@@ -152,7 +153,9 @@ Worker Mac
      └── runner/run_task.sh       — sends prompts to Ollama, writes output
 ```
 
-The skill uses a **lock directory** (`$WORKER_ROOT/queue/ollama.lock.d`) to enforce that only one task runs at a time. If a task crashes without releasing the lock, `ollama status clean` removes it safely.
+The skill uses a **lock directory** (`$WORKER_ROOT/queue/ollama.lock.d`) to enforce that only one task runs at a time for generation and write operations. Read-only checks such as `list-models` do not require the lock.
+
+If a task crashes without releasing the lock, `ollama status clean` removes it safely. If `ollama status` shows Ollama as busy with no lock and no runner, that is an orphaned generation inside Ollama itself. In that state, read-only checks can still work, but new generation tasks should wait or use `clean --kill-ollama` if the orphan does not clear.
 
 ---
 

@@ -24,7 +24,7 @@ Execute a task on the worker machine. Available tasks:
 | `test` | `ollama run test [suite]` | Run project tests |
 | `exec` | `ollama run exec <command>` | Run arbitrary shell command |
 | `list-projects` | `ollama run list-projects` | List available projects |
-| `list-models` | `ollama run list-models` | List available Ollama models via the HTTP API |
+| `list-models` | `ollama run list-models` | List available Ollama models via a read-only remote HTTP API check |
 
 ## Configuration
 | Variable | Default | Description |

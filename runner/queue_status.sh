@@ -96,6 +96,7 @@ elif [ "$OLLAMA_BUSY" = true ] && [ "$LOCK_STATE" = "clear" ]; then
   echo -e "${RED}⚠ Orphan: Ollama is busy but no lock dir exists${NC}"
   echo "  A runner process started Ollama but was killed before acquiring/releasing lock."
   echo "  Ollama will finish its current job. Lock is clear so next job can start."
+  echo "  Read-only checks such as model listing can still use the Ollama HTTP API."
 
 elif [ "$OLLAMA_BUSY" = false ] && [ "$LOCK_STATE" != "clear" ]; then
   echo -e "${RED}⚠ Stale lock: Ollama is idle but lock dir exists${NC}"

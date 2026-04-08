@@ -37,6 +37,29 @@ class OllamaTaskOrchestrator:
         )
         return result.stdout.strip(), result.stderr.strip(), result.returncode
 
+    def _run_remote_api(self, endpoint: str) -> str:
+        """Run a read-only Ollama API request on the worker via SSH."""
+        command = (
+            "python3 - "
+            + shlex.quote(endpoint)
+            + " <<'PYEOF'\n"
+            "import json\n"
+            "import sys\n"
+            "import urllib.request\n"
+            "\n"
+            "endpoint = sys.argv[1]\n"
+            "with urllib.request.urlopen(endpoint, timeout=5) as response:\n"
+            "    data = json.load(response)\n"
+            "\n"
+            "for model in data.get('models', []):\n"
+            "    print(model.get('name', ''))\n"
+            "PYEOF"
+        )
+        stdout, stderr, code = self._ssh(command)
+        if code != 0:
+            raise RuntimeError(stderr or "remote API request failed")
+        return stdout
+
     def queue_status(self, args: str = "") -> str:
         """Check queue status and Ollama server health."""
         cmd = [f"{self.runner_path}/queue_status.sh"]
@@ -49,10 +72,19 @@ class OllamaTaskOrchestrator:
 
     def run_task(self, task_command: str) -> str:
         """Run a task on the worker Mac with exclusivity locking."""
+        normalized = task_command.strip()
+        if normalized == "list-models":
+            return self._run_remote_api("http://localhost:11434/api/tags")
+
         with self.lock:
             cmd = [f"{self.runner_path}/run_task.sh", *shlex.split(task_command)]
             stdout, stderr, code = self._ssh(cmd)
             if code != 0:
+                if normalized == "list-models":
+                    try:
+                        return self._run_remote_api("http://localhost:11434/api/tags")
+                    except RuntimeError:
+                        pass
                 return f"Error running task: {stderr}"
             return stdout
 
