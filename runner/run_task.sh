@@ -41,7 +41,7 @@ shift || true
 NEEDS_LOCK=false
 if [ "$DRY_RUN" = false ]; then
   case "$TASK" in
-    help|ping|list-projects|list-models|test|exec|"") NEEDS_LOCK=false ;;
+    help|ping|list-projects|list-models|active-model|list-active-models|test|exec|"") NEEDS_LOCK=false ;;
     *) NEEDS_LOCK=true ;;
   esac
 fi
@@ -271,6 +271,30 @@ for model in data.get("models", []):
 PYEOF
 }
 
+run_list_active_models() {
+  local api_base="${OLLAMA_URL%/api/generate}"
+  if [ "$DRY_RUN" = true ]; then
+    echo "DRY RUN: would list active models from $api_base/api/ps"
+    return 0
+  fi
+  python3 - "$api_base" << 'PYEOF'
+import json
+import sys
+import urllib.request
+
+api_base = sys.argv[1]
+with urllib.request.urlopen(f"{api_base}/api/ps", timeout=5) as response:
+    data = json.load(response)
+
+models = data.get("models", [])
+if not models:
+    print("idle")
+else:
+    for model in models:
+        print(model.get("name", ""))
+PYEOF
+}
+
 interpret_nl_request() {
   local request="$1"
   local project_context=""
@@ -313,6 +337,12 @@ if not request:
 
 if re.search(r"\b(list|show)\b.*\bprojects\b", lower) or "what projects" in lower:
     emit("list-projects")
+
+if re.search(r"\b(active|loaded|running|current)\b.*\bmodels?\b", lower):
+    emit("list-active-models")
+
+if re.search(r"\b(active|loaded|running|current)\b.*\bmodel\b", lower):
+    emit("active-model")
 
 if re.search(r"\b(list|show|check)\b.*\bmodels\b", lower) or "what models" in lower:
     emit("list-models")
@@ -392,6 +422,8 @@ Allowed actions:
 - test: run the test suite, optionally with a suite name
 - list-projects: list available projects
 - list-models: list available Ollama models
+- active-model: list the currently active Ollama model, or "idle"
+- list-active-models: list the currently active Ollama model(s), or "idle"
 $( [ "$ALLOW_NL_EXEC" = "true" ] && echo "- exec: run a shell command" )
 
 Rules:
@@ -401,7 +433,7 @@ Rules:
 - For "write", include "path" and "instruction".
 - For "codegen", include "instruction".
 - For "test", include "suite" and use "all" if unspecified.
-- For "list-projects" and "list-models", no extra fields are needed.
+- For "list-projects", "list-models", "active-model", and "list-active-models", no extra fields are needed.
 - Use "exec" only if the request clearly asks to run a shell command and exec is allowed.
 - If the request is ambiguous, prefer "codegen" over "exec".
 - Relative file paths only. Never use absolute paths or "..".
@@ -434,7 +466,7 @@ except json.JSONDecodeError as exc:
     raise SystemExit(1)
 
 action = data.get("action", "")
-if action not in {"codegen", "write", "test", "list-projects", "list-models", "exec"}:
+if action not in {"codegen", "write", "test", "list-projects", "list-models", "active-model", "list-active-models", "exec"}:
     print(f"ERROR: unsupported routed action: {action}")
     raise SystemExit(1)
 
@@ -512,6 +544,9 @@ run_nl() {
     list-models)
       run_list_models
       ;;
+    active-model|list-active-models)
+      run_list_active_models
+      ;;
     exec)
       echo "Command: $command"
       run_exec "$command"
@@ -533,6 +568,12 @@ Commands:
   list-models
     List available models from the local Ollama HTTP API.
     Usage: run_task.sh [--dry-run] list-models
+
+  active-model
+  list-active-models
+    List the currently active Ollama model(s), or "idle".
+    Usage: run_task.sh [--dry-run] active-model
+    Usage: run_task.sh [--dry-run] list-active-models
 
   codegen <instruction>
     Generate code from an instruction using the configured Ollama model.
@@ -578,6 +619,10 @@ HELP
 
   list-models)
     run_list_models
+    ;;
+
+  active-model|list-active-models)
+    run_list_active_models
     ;;
 
   test)

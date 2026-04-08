@@ -134,10 +134,13 @@ ollama run test
 ollama run exec "ls $PROJECTS_DIR"
 ollama run list-projects
 ollama run list-models
+ollama run active-model
+ollama run list-active-models
 ```
 
 `list-models` uses the Ollama HTTP API directly, so it still works in SSH sessions where the `ollama` CLI is not available on `PATH`.
 The skill wrapper also treats `list-models` as a read-only remote API check, so installed-model discovery can keep working even when a worker is busy or has an orphaned generation.
+`active-model` and `list-active-models` use the Ollama `api/ps` endpoint the same way, so current-model checks stay reliable during those same conditions.
 
 ---
 

@@ -60,6 +60,29 @@ class OllamaTaskOrchestrator:
             raise RuntimeError(stderr or "remote API request failed")
         return stdout
 
+    def _list_active_models(self) -> str:
+        """List currently loaded Ollama models on the worker via SSH."""
+        command = (
+            "python3 - <<'PYEOF'\n"
+            "import json\n"
+            "import urllib.request\n"
+            "\n"
+            "with urllib.request.urlopen('http://localhost:11434/api/ps', timeout=5) as response:\n"
+            "    data = json.load(response)\n"
+            "\n"
+            "models = data.get('models', [])\n"
+            "if not models:\n"
+            "    print('idle')\n"
+            "else:\n"
+            "    for model in models:\n"
+            "        print(model.get('name', ''))\n"
+            "PYEOF"
+        )
+        stdout, stderr, code = self._ssh(command)
+        if code != 0:
+            raise RuntimeError(stderr or "remote API request failed")
+        return stdout
+
     def queue_status(self, args: str = "") -> str:
         """Check queue status and Ollama server health."""
         cmd = [f"{self.runner_path}/queue_status.sh"]
@@ -75,6 +98,8 @@ class OllamaTaskOrchestrator:
         normalized = task_command.strip()
         if normalized == "list-models":
             return self._run_remote_api("http://localhost:11434/api/tags")
+        if normalized in {"active-model", "list-active-models"}:
+            return self._list_active_models()
 
         with self.lock:
             cmd = [f"{self.runner_path}/run_task.sh", *shlex.split(task_command)]
@@ -83,6 +108,11 @@ class OllamaTaskOrchestrator:
                 if normalized == "list-models":
                     try:
                         return self._run_remote_api("http://localhost:11434/api/tags")
+                    except RuntimeError:
+                        pass
+                if normalized in {"active-model", "list-active-models"}:
+                    try:
+                        return self._list_active_models()
                     except RuntimeError:
                         pass
                 return f"Error running task: {stderr}"

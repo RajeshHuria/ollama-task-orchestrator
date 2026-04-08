@@ -25,6 +25,8 @@ Execute a task on the worker machine. Available tasks:
 | `exec` | `ollama run exec <command>` | Run arbitrary shell command |
 | `list-projects` | `ollama run list-projects` | List available projects |
 | `list-models` | `ollama run list-models` | List available Ollama models via a read-only remote HTTP API check |
+| `active-model` | `ollama run active-model` | Show the currently active Ollama model, or `idle` |
+| `list-active-models` | `ollama run list-active-models` | List the currently active Ollama model(s), or `idle` |
 
 ## Configuration
 | Variable | Default | Description |
