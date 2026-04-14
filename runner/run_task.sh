@@ -85,11 +85,33 @@ print_status() {
 echo "=== RUNNER START ==="
 print_status
 
+get_active_ollama_models() {
+  local api_base="${OLLAMA_URL%/api/generate}"
+  curl -s --max-time 3 "$api_base/api/ps" 2>/dev/null | python3 -c \
+    'import sys,json; print("\n".join(m.get("name","") for m in json.load(sys.stdin).get("models", []) if m.get("name")))'
+}
+
+ensure_ollama_idle_for_generation() {
+  local active_models
+  active_models="$(get_active_ollama_models 2>/dev/null || true)"
+
+  if [ -n "$active_models" ]; then
+    local first_model
+    first_model="$(printf '%s\n' "$active_models" | head -n 1)"
+    echo "ERROR: Ollama is already busy with: $first_model"
+    echo "Refusing to start a new generation because another client may be using Ollama outside this runner."
+    echo "Wait for it to finish, or check: queue_status.sh"
+    exit 1
+  fi
+}
+
 # ── Ollama generation ─────────────────────────────────────────────────────────
 ollama_generate() {
   local instruction="$1"
   local code_only="${2:-false}"
   local prompt="$instruction"
+
+  ensure_ollama_idle_for_generation
 
   # Prepend project context if available
   if [ -n "$DEFAULT_PROJECT" ]; then

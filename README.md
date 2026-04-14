@@ -158,6 +158,8 @@ Worker Mac
 
 The skill uses a **lock directory** (`$WORKER_ROOT/queue/ollama.lock.d`) to enforce that only one task runs at a time for generation and write operations. Read-only checks such as `list-models` do not require the lock.
 
+Generation tasks also check Ollama's live `/api/ps` state before sending a prompt. That means the runner will refuse to start a new generation if Ollama is already busy from another client such as VS Code, even when no runner lock exists.
+
 If a task crashes without releasing the lock, `ollama status clean` removes it safely. If `ollama status` shows Ollama as busy with no lock and no runner, that is an orphaned generation inside Ollama itself. In that state, read-only checks can still work, but new generation tasks should wait or use `clean --kill-ollama` if the orphan does not clear.
 
 ---
